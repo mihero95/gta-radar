@@ -1,1 +1,145 @@
-Commit
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>GTA Online – Deal Tracker</title>
+  <style>
+    body { font-family: Arial; background:#111; color:white; padding:20px; }
+    h1,h2 { margin-top:20px; }
+    button { margin:5px; padding:8px 12px; cursor:pointer; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
+    .card { background:#222; padding:10px; border-radius:8px; }
+    .promo { border:2px solid #00ff88; }
+  </style>
+</head>
+<body>
+
+<h1 id="title">GTA Online – Deal Tracker</h1>
+
+<!-- Filtres -->
+<div>
+  <button onclick="filterCat('all')">Tous</button>
+  <button onclick="filterCat('Business')">Business</button>
+  <button onclick="filterCat('Voiture')">Voitures</button>
+  <button onclick="filterCat('Immobilier')">Immobilier</button>
+  <button onclick="filterPromo()">Promos</button>
+  <button onclick="filterFree()">Gratuit</button>
+  <button onclick="toggleLang()">FR / EN</button>
+</div>
+
+<h2>🔥 Gratuit & Promos</h2>
+<div id="highlight" class="grid"></div>
+
+<h2>📦 Tous les contenus</h2>
+<div id="list" class="grid"></div>
+
+<h2>🕘 Historique des promos</h2>
+<div id="history"></div>
+
+<script>
+// ---- DATABASE ----
+const items = [
+  { id:1, name:"Kosatka", type:"Business", category:"Business", promo:true, discount:100 },
+  { id:2, name:"Oppressor Mk II", type:"Voiture", category:"Voiture", promo:true, discount:40 },
+  { id:3, name:"Appartement Eclipse", type:"Appartement", category:"Immobilier", promo:false, discount:0 },
+  { id:4, name:"Bureau Maze Bank", type:"Bureau", category:"Business", promo:true, discount:50 },
+  { id:5, name:"Hangar LSIA", type:"Hangar", category:"Business", promo:false, discount:0 }
+];
+
+const historyData = [
+  { week:"Semaine -1", item:"Kosatka", discount:50 },
+  { week:"Semaine -1", item:"Oppressor Mk II", discount:30 }
+];
+
+let current = items;
+let lang = "fr";
+let favorites = JSON.parse(localStorage.getItem("fav") || "[]");
+
+// ---- Traductions ----
+const t = {
+  fr:{ title:"GTA Online – Deal Tracker", free:"Gratuit", normal:"Prix normal", fav:"Favori" },
+  en:{ title:"GTA Online – Deal Tracker", free:"Free", normal:"Normal price", fav:"Favorite" }
+};
+
+function render(){
+  document.getElementById("title").innerText = t[lang].title;
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  current.forEach(i=>{
+    const isFav = favorites.includes(i.id);
+    list.innerHTML += `
+      <div class="card ${i.promo?'promo':''}">
+        <b>${i.name}</b><br>
+        ${i.discount==100 ? t[lang].free :
+          i.promo ? "-"+i.discount+"%" : t[lang].normal}<br>
+        <button onclick="toggleFav(${i.id})">
+          ${isFav?"❤️":"🤍"} ${t[lang].fav}
+        </button>
+      </div>`;
+  });
+}
+
+function renderHighlight(){
+  const h = document.getElementById("highlight");
+  h.innerHTML="";
+  items.filter(i=>i.promo).forEach(i=>{
+    h.innerHTML += `
+      <div class="card promo">
+        <b>${i.name}</b><br>
+        ${i.discount==100?t[lang].free:"-"+i.discount+"%"}
+      </div>`;
+  });
+}
+
+function renderHistory(){
+  const h = document.getElementById("history");
+  h.innerHTML="";
+  historyData.forEach(i=>{
+    h.innerHTML += `<p>• ${i.week} : ${i.item} (-${i.discount}%)</p>`;
+  });
+}
+
+// ---- Filtres ----
+function filterCat(cat){
+  current = cat=="all"?items:items.filter(i=>i.category==cat);
+  render();
+}
+function filterPromo(){
+  current = items.filter(i=>i.promo);
+  render();
+}
+function filterFree(){
+  current = items.filter(i=>i.discount==100);
+  render();
+}
+
+// ---- Favoris + notif ----
+function toggleFav(id){
+  if(favorites.includes(id)){
+    favorites = favorites.filter(f=>f!==id);
+  } else {
+    favorites.push(id);
+    const item = items.find(i=>i.id===id);
+    if(item.promo){
+      alert("🔔 Ton favori "+item.name+" est en promo !");
+    }
+  }
+  localStorage.setItem("fav", JSON.stringify(favorites));
+  render();
+}
+
+// ---- Langue ----
+function toggleLang(){
+  lang = lang==="fr"?"en":"fr";
+  renderHighlight();
+  render();
+}
+
+// Init
+renderHighlight();
+renderHistory();
+render();
+</script>
+
+</body>
+</html>
